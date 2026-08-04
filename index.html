@@ -1,22 +1,30 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#020208">
   <title>3D Pacman</title>
   <link rel="stylesheet" href="./src/styles.css">
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"
-      }
-    }
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}
   </script>
 </head>
 <body>
-  <main id="game" aria-label="3D Pacman game"></main>
-  <aside id="status" role="status" aria-live="polite">Loading…</aside>
-  <noscript>This game requires JavaScript.</noscript>
+  <main id="app">
+    <div id="game" aria-label="3D Pacman speelveld"></div>
+    <button id="primary-action" type="button">Start spel</button>
+    <section id="touch-controls" aria-label="Touchbediening">
+      <button data-action="move-up" class="up">▲<span>Omhoog</span></button>
+      <button data-action="move-left" class="left">◀<span>Links</span></button>
+      <button data-action="move-down" class="down">▼<span>Omlaag</span></button>
+      <button data-action="move-right" class="right">▶<span>Rechts</span></button>
+      <button data-action="pause" class="pause">Ⅱ<span>Pauze</span></button>
+      <button data-action="restart" class="restart">↻<span>Opnieuw</span></button>
+    </section>
+    <p id="status" class="visually-hidden" role="status" aria-live="polite">Laden…</p>
+  </main>
+  <noscript>Dit spel vereist JavaScript.</noscript>
   <script type="module" src="./src/game.js"></script>
 </body>
 </html>
