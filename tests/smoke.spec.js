@@ -1,13 +1,2 @@
-import { test, expect } from '@playwright/test';
-
-test('integrated game exposes renderer, HUD, controls and entities', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForFunction(() => window.__GAME_READY__ === true, null, { timeout: 60_000 });
-  await expect(page).toHaveTitle(/3D Pacman/i);
-  await expect(page.locator('#game canvas')).toBeVisible();
-  await expect(page.locator('.pacman-hud')).toBeVisible();
-  await expect(page.locator('#touch-controls button')).toHaveCount(6);
-  await expect.poll(() => page.evaluate(() => window.__GAME__.entities.size)).toBeGreaterThan(20);
-  await page.keyboard.press('Enter');
-  await expect.poll(() => page.evaluate(() => window.__GAME__.gameplay.getState().status)).toBe('playing');
-});
+import {test,expect} from '@playwright/test';
+test('FPS ready, start, move, look, fire, score, pause and restart',async({page})=>{await page.goto('/');await page.waitForFunction(()=>window.__GAME_READY__===true);await page.evaluate(()=>window.__GAME__.start());const before=await page.evaluate(()=>window.__GAME__.entities.get('pacman').position.z);await page.keyboard.down('KeyW');await page.waitForTimeout(150);await page.keyboard.up('KeyW');expect(await page.evaluate(()=>window.__GAME__.entities.get('pacman').position.z)).toBeLessThan(before);await page.evaluate(()=>window.__GAME__.setView(.2,.1));expect((await page.evaluate(()=>window.__GAME__.getView())).yaw).toBe(.2);await page.evaluate(()=>{const g=window.__GAME__,p=g.entities.get('pacman').position;g.setView(0,0);g.entities.set('invader-test',{kind:'invader',position:{x:p.x,z:p.z-2},velocity:{x:0}});g.fire(performance.now()+1000)});expect(await page.evaluate(()=>window.__GAME__.gameplay.getState().score)).toBe(100);await page.keyboard.press('KeyP');expect(await page.evaluate(()=>window.__GAME__.gameplay.getState().status)).toBe('paused');await page.keyboard.press('KeyR');expect(await page.evaluate(()=>window.__GAME__.gameplay.getState().status)).toBe('playing')});
