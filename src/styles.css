@@ -1,14 +1,31 @@
 * { box-sizing: border-box; }
-html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #020208; color: white; font-family: system-ui, sans-serif; touch-action: none; }
-#game { position: relative; width: 100vw; height: 100dvh; min-height: 320px; }
+:root { color-scheme: dark; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #020208; color: #fff; font-family: system-ui, sans-serif; touch-action: none; }
+#game { position: fixed; inset: 0; min-height: 320px; overflow: hidden; }
 #game canvas { display: block; width: 100%; height: 100%; }
 #status { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-#touch-controls { position: fixed; z-index: 30; inset: auto max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); display: flex; justify-content: space-between; align-items: end; pointer-events: none; }
-#touch-controls button { pointer-events: auto; min-width: 52px; min-height: 52px; border: 2px solid #ffe600; border-radius: 12px; color: #fff; background: #080816dd; font: 700 1rem system-ui; user-select: none; -webkit-user-select: none; }
-#touch-controls button:active { color: #080816; background: #ffe600; }
-.dpad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 4px; }
+.pacman-hud { position: fixed; z-index: 20; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); max-width: min(30rem, calc(100vw - 20px)); padding: 10px 12px; border: 1px solid #ffe60088; border-radius: 12px; background: #020208d9; box-shadow: 0 4px 20px #000a; pointer-events: none; }
+.pacman-hud p { margin: 3px 0; }
+.pacman-hud__stats { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.pacman-hud__stats p { white-space: nowrap; }
+.pacman-hud__status { color: #ffe600; font-weight: 800; }
+.pacman-hud details { margin-top: 5px; pointer-events: auto; }
+.pacman-hud ul { margin: 5px 0 0; padding-left: 20px; }
+#touch-controls { position: fixed; z-index: 30; inset: auto max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); display: none; justify-content: space-between; align-items: end; gap: 24px; pointer-events: none; }
+#touch-controls button { pointer-events: auto; min-width: 52px; min-height: 52px; border: 2px solid #ffe600; border-radius: 12px; color: #fff; background: #080816e8; font: 700 1rem system-ui; user-select: none; -webkit-user-select: none; transition: transform .08s, color .08s, background .08s; }
+#touch-controls button:active, #touch-controls button.is-pressed, #touch-controls button[aria-pressed="true"] { transform: scale(.94); color: #080816; background: #ffe600; }
+.dpad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 8px; }
 .dpad .up { grid-area: 1 / 2; }.dpad .left { grid-area: 2 / 1; }.dpad .down { grid-area: 2 / 2; }.dpad .right { grid-area: 2 / 3; }
-.actions { display: grid; gap: 8px; }
-@media (hover: hover) and (pointer: fine) { #touch-controls { opacity: .6; } }
-@media (max-height: 540px) { #touch-controls button { min-width: 44px; min-height: 44px; }.dpad { grid-template: repeat(3,44px) / repeat(3,44px); }.pacman-hud__onboarding { display: none; } }
-@media (orientation: portrait) and (max-width: 600px) { #touch-controls { bottom: max(8px, env(safe-area-inset-bottom)); }.pacman-hud__status { margin-top: 30vh !important; } }
+.actions { display: grid; gap: 10px; }
+@media (hover: none), (pointer: coarse) { #touch-controls { display: flex; } }
+@media (max-height: 540px) and (hover: none), (max-height: 540px) and (pointer: coarse) {
+  .pacman-hud { padding: 6px 9px; font-size: .82rem; max-width: 48vw; }
+  .pacman-hud details { display: none; }
+  #touch-controls button { min-width: 48px; min-height: 48px; }
+  .dpad { grid-template: repeat(2, 48px) / repeat(3, 48px); gap: 8px; }
+}
+@media (orientation: portrait) and (max-width: 600px) {
+  .pacman-hud { right: 10px; max-width: none; }
+  .pacman-hud details { display: none; }
+  #touch-controls { gap: 16px; }
+}
