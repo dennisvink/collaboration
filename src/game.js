@@ -1,138 +1,24 @@
 import { createGameplay, GAME_STATES, COLLISIONS } from './gameplay.js';
-import { createInputController } from './input.js';
-import { initScene, syncScene } from './scene3d.js';
+import { initScene, syncScene, setFirstPersonView } from './scene3d.js';
 import { createHUD } from './hud.js';
-
-const gameRoot = document.querySelector('#game');
-const controls = document.querySelector('#touch-controls');
-const status = document.querySelector('#status');
-const pelletPositions = [
-  [-8,-6],[-4,-6],[0,-6],[4,-6],[8,-6],[-8,-2],[-4,-2],[0,-2],[4,-2],[8,-2],
-  [-8,2],[-4,2],[0,2],[4,2],[8,2],[-8,6],[-4,6],[0,6],[4,6],[8,6],
-];
-const gameplay = createGameplay({ levels: [{ pellets: 20 }, { pellets: 20 }], lives: 3 });
-const hud = createHUD({ container: gameRoot, onboarding: [
-  'Bewegen: pijltjes of W, A, S, D', 'Pauze: P, Escape of pauzeknop', 'Start/herstart: Enter, tik of R',
-] });
-const entities = new Map();
-let projectileSequence = 0;
-let shotClock = 0;
-let previous = performance.now();
-
-function resetWorld() {
-  entities.clear();
-  entities.set('pacman', { kind: 'pacman', position: { x: 0, z: 6 }, velocity: { x: 0, z: 0 } });
-  pelletPositions.forEach(([x, z], index) => entities.set(`pellet-${index}`, {
-    kind: index % 9 === 0 ? 'power-pellet' : 'pellet', position: { x, z }, active: true,
-  }));
-  for (let index = 0; index < 5; index += 1) entities.set(`invader-${index}`, {
-    kind: 'invader', position: { x: -6 + index * 3, z: -5 }, velocity: { x: 1.2, z: 0 }, active: true,
-  });
-}
-
-function presentState() {
-  const state = gameplay.getState();
-  return { ...state, pelletsTotal: pelletPositions.length, entities };
-}
-
-function refresh() {
-  const state = presentState();
-  syncScene(state);
-  hud.updateHUD(state);
-  status.textContent = state.status;
-  document.body.dataset.gameStatus = state.status;
-}
-
-function startOrContinue() {
-  const state = gameplay.getState();
-  if (state.status === GAME_STATES.START) gameplay.start();
-  else if (state.status === GAME_STATES.PAUSED) gameplay.resume();
-  else if (state.status === GAME_STATES.LEVEL_WON && state.level < state.levelCount) {
-    gameplay.advanceLevel(); resetWorld();
-  } else if (state.status === GAME_STATES.GAME_OVER || state.status === GAME_STATES.LEVEL_WON) {
-    gameplay.restart(); resetWorld(); gameplay.start();
-  }
-  refresh();
-}
-
-const input = createInputController({ touchRoot: controls, onAction({ action, active }) {
-  if (!active) return;
-  if (action === 'pause') gameplay.dispatch('TOGGLE_PAUSE');
-  if (action === 'restart') { gameplay.restart(); resetWorld(); gameplay.start(); }
-  refresh();
-} });
-
-function moveEntities(deltaSeconds) {
-  const player = entities.get('pacman');
-  const direction = input.getDirection();
-  const length = Math.hypot(direction.x, direction.z) || 1;
-  player.velocity = { x: direction.x / length * 5, z: direction.z / length * 5 };
-  player.position.x = Math.max(-8.8, Math.min(8.8, player.position.x + player.velocity.x * deltaSeconds));
-  player.position.z = Math.max(-6.8, Math.min(6.8, player.position.z + player.velocity.z * deltaSeconds));
-
-  for (const [id, entity] of entities) {
-    if (id.startsWith('pellet-') && distance(player, entity) < 0.55) {
-      entities.delete(id);
-      gameplay.collide({ type: entity.kind === 'power-pellet' ? COLLISIONS.POWER_PELLET : COLLISIONS.PELLET });
-    }
-    if (id.startsWith('invader-')) {
-      entity.position.x += entity.velocity.x * deltaSeconds;
-      if (Math.abs(entity.position.x) > 8) entity.velocity.x *= -1;
-      if (distance(player, entity) < 0.75) {
-        gameplay.collide(COLLISIONS.GHOST);
-        player.position = { x: 0, z: 6 };
-      }
-    }
-    if (id.startsWith('shot-')) {
-      entity.position.z -= 9 * deltaSeconds;
-      if (entity.position.z < -8) entities.delete(id);
-      for (const [invaderId, invader] of entities) {
-        if (invaderId.startsWith('invader-') && distance(entity, invader) < 0.6) {
-          entities.delete(id); entities.delete(invaderId); break;
-        }
-      }
-    }
-  }
-
-  shotClock += deltaSeconds;
-  if (shotClock > 0.8) {
-    shotClock = 0;
-    projectileSequence += 1;
-    entities.set(`shot-${projectileSequence}`, {
-      kind: 'projectile', position: { x: player.position.x, z: player.position.z - 0.6 }, velocity: { x: 0, z: -9 },
-    });
-  }
-}
-
-function distance(a, b) {
-  return Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z);
-}
-
-function frame(now) {
-  const deltaMs = Math.min(50, now - previous);
-  previous = now;
-  if (gameplay.getState().status === GAME_STATES.PLAYING) {
-    gameplay.update(deltaMs);
-    moveEntities(deltaMs / 1000);
-    refresh();
-  }
-  requestAnimationFrame(frame);
-}
-
-async function bootstrap() {
-  initScene(gameRoot);
-  resetWorld();
-  input.attach();
-  document.addEventListener('keydown', (event) => { if (event.code === 'Enter') startOrContinue(); });
-  gameRoot.addEventListener('click', (event) => { if (!event.target.closest('button, details')) startOrContinue(); });
-  gameplay.subscribe(refresh);
-  refresh();
-  window.__GAME__ = { gameplay, input, entities, startOrContinue };
-  window.__GAME_READY__ = true;
-  requestAnimationFrame(frame);
-}
-
-bootstrap().catch((error) => {
-  status.textContent = `Initialization failed: ${error.message}`;
-  console.error(error);
-});
+import { moveWithWallSlide, validSpawn } from './world.js';
+import { clampPitch, lookVector, moveVector, canFire, hitscan } from './fps.js';
+const root=document.querySelector('#game'), status=document.querySelector('#status');
+const gameplay=createGameplay({levels:[{pellets:20},{pellets:20}],lives:3});
+const hud=createHUD({container:root,onboarding:['WASD/pijlen: bewegen','Muis/drag: kijken','Klik/spatie/vuur: schieten','P/Escape: pauze']});
+const entities=new Map(), keys=new Set(); let yaw=0,pitch=0,lastFire=-Infinity,previous=performance.now(),enemyClock=0,sequence=0;
+const pellets=[[-8,-6],[-4,-6],[0,-6],[4,-6],[8,-6],[-8,-2],[-4,-2],[0,-2],[4,-2],[8,-2],[-8,2],[-4,2],[0,2],[4,2],[8,2],[-8,6],[-4,6],[0,6],[4,6],[8,6]];
+function resetWorld(){entities.clear();entities.set('pacman',{kind:'pacman',position:{x:2,z:6}});pellets.forEach(([x,z],i)=>entities.set(`pellet-${i}`,{kind:i%9?'pellet':'power-pellet',position:{x,z}}));for(let i=0;i<5;i++){const p={x:-6+i*3,z:-5};if(validSpawn(p))entities.set(`invader-${i}`,{kind:'invader',position:p,velocity:{x:1.1}})}}
+function state(){return {...gameplay.getState(),pelletsTotal:pellets.length,entities}}
+function refresh(){const s=state();syncScene(s);hud.updateHUD(s);status.textContent=s.status;document.body.dataset.gameStatus=s.status}
+function start(){const s=gameplay.getState();if(s.status==='start')gameplay.start();else if(s.status==='paused')gameplay.resume();else if(s.status==='level-won'&&s.level<s.levelCount){gameplay.advanceLevel();resetWorld()}else if(s.status==='game-over'||s.status==='level-won'){gameplay.restart();resetWorld();gameplay.start()}refresh()}
+function fire(now=performance.now()){if(gameplay.getState().status!==GAME_STATES.PLAYING||!canFire(now,lastFire))return false;lastFire=now;const player=entities.get('pacman');const hit=hitscan(player.position,lookVector(yaw,pitch),entities);if(hit&&entities.delete(hit.id))gameplay.collide({type:COLLISIONS.GHOST,vulnerable:true,points:100});refresh();return Boolean(hit)}
+function update(dt){const player=entities.get('pacman');const forward=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0);const strafe=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);if(forward||strafe){const v=moveVector(yaw,forward,strafe);player.position=moveWithWallSlide(player.position,{x:v.x*4.2*dt,z:v.z*4.2*dt})}
+ for(const [id,e] of [...entities]){if(id.startsWith('pellet-')&&Math.hypot(e.position.x-player.position.x,e.position.z-player.position.z)<.5){entities.delete(id);gameplay.collide({type:e.kind==='power-pellet'?COLLISIONS.POWER_PELLET:COLLISIONS.PELLET})}if(id.startsWith('invader-')){e.position.x+=e.velocity.x*dt;if(!validSpawn(e.position,.4))e.velocity.x*=-1}if(id.startsWith('enemy-shot-')){e.position.z+=5*dt;if(Math.hypot(e.position.x-player.position.x,e.position.z-player.position.z)<.45){entities.delete(id);gameplay.collide(COLLISIONS.GHOST)}else if(Math.abs(e.position.z)>8)entities.delete(id)}}
+ enemyClock+=dt;if(enemyClock>1.2){enemyClock=0;const inv=[...entities].find(([id])=>id.startsWith('invader-'));if(inv){sequence++;entities.set(`enemy-shot-${sequence}`,{kind:'projectile',position:{x:inv[1].position.x,z:inv[1].position.z+.5}})}}setFirstPersonView(player.position,yaw,pitch)}
+function frame(now){const dt=Math.min(.05,(now-previous)/1000);previous=now;if(gameplay.getState().status===GAME_STATES.PLAYING){gameplay.update(dt*1000);update(dt);refresh()}requestAnimationFrame(frame)}
+document.addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Space'){e.preventDefault();fire()}if(e.code==='Enter')start();if(e.code==='KeyP'||e.code==='Escape'){gameplay.dispatch('TOGGLE_PAUSE');refresh()}if(e.code==='KeyR'){gameplay.restart();resetWorld();gameplay.start();refresh()}});document.addEventListener('keyup',e=>keys.delete(e.code));
+root.addEventListener('click',()=>{if(gameplay.getState().status!==GAME_STATES.PLAYING)start();else{root.requestPointerLock?.();fire()}});document.addEventListener('mousemove',e=>{if(document.pointerLockElement===root){yaw-=e.movementX*.0025;pitch=clampPitch(pitch-e.movementY*.0025)}});
+let touch=null;const look=document.querySelector('#look-zone');look.addEventListener('pointerdown',e=>{touch={id:e.pointerId,x:e.clientX,y:e.clientY};look.setPointerCapture(e.pointerId)});look.addEventListener('pointermove',e=>{if(touch?.id===e.pointerId){yaw-=(e.clientX-touch.x)*.008;pitch=clampPitch(pitch-(e.clientY-touch.y)*.008);touch={id:e.pointerId,x:e.clientX,y:e.clientY}}});look.addEventListener('pointerup',()=>touch=null);document.querySelector('#fire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});
+for(const b of document.querySelectorAll('[data-key]')){b.addEventListener('pointerdown',()=>keys.add(b.dataset.key));for(const type of ['pointerup','pointercancel','pointerleave'])b.addEventListener(type,()=>keys.delete(b.dataset.key))}document.querySelector('[data-action=pause]').onclick=()=>{gameplay.dispatch('TOGGLE_PAUSE');refresh()};document.querySelector('[data-action=restart]').onclick=()=>{gameplay.restart();resetWorld();gameplay.start();refresh()};
+initScene(root);resetWorld();setFirstPersonView(entities.get('pacman').position,yaw,pitch);refresh();window.__GAME__={gameplay,entities,start,fire,getView:()=>({yaw,pitch}),setView:(y,p)=>{yaw=y;pitch=clampPitch(p)}};window.__GAME_READY__=true;requestAnimationFrame(frame);
