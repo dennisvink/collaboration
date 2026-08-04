@@ -11,7 +11,7 @@ export function hitscan(origin, direction, entities, maxDistance=30) {
   const wallDistance=rayWallDistance(origin,direction,maxDistance); let hit=null, nearest=wallDistance;
   for (const [id,e] of entities) {
     if (!id.startsWith('invader-') || e.active===false) continue;
-    const dx=e.position.x-origin.x, dy=(e.position.y ?? 0)-(origin.y ?? 0), dz=e.position.z-origin.z;
+    const dx=e.position.x-origin.x, dy=(e.position.y ?? origin.y ?? 0)-(origin.y ?? 0), dz=e.position.z-origin.z;
     const along=dx*direction.x+dy*(direction.y ?? 0)+dz*direction.z;
     if (along<=0 || along>=nearest) continue;
     const distanceSquared=dx*dx+dy*dy+dz*dz-along*along;
