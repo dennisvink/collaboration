@@ -78,6 +78,17 @@ function addSky() {
   scene.add(sky);
 }
 
+function getEntityY(e) {
+  const pos = e.position ?? {};
+  const y = Number(pos.y);
+
+  // New contract: use finite position.y when provided (aerial entities).
+  if (Number.isFinite(y)) return y;
+
+  // Legacy fallback: preserve baseline heights.
+  return e.kind?.includes('pellet') ? 0.18 : 0.45;
+}
+
 export function initScene(target = '#game') {
   container = typeof target === 'string' ? document.querySelector(target) : target;
   if (!container) throw Error('Scene container not found');
@@ -109,7 +120,7 @@ export function initScene(target = '#game') {
   sun.position.set(6, 10, 2);
   scene.add(sun);
 
-  // Ground: subtle roughness + slight sheen.
+  // Ground.
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(24, 18),
     new THREE.MeshStandardMaterial({
@@ -121,7 +132,7 @@ export function initScene(target = '#game') {
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  // Walls: a touch brighter and less emissive, to read as material not UI glow.
+  // Walls.
   const wallMaterial = new THREE.MeshStandardMaterial({
     color: 0x204a78,
     emissive: 0x061221,
@@ -176,8 +187,7 @@ export function syncScene(state) {
       scene.add(m);
     }
 
-    // Keep existing vertical placement behavior this cycle.
-    m.position.set(e.position.x, e.kind?.includes('pellet') ? 0.18 : 0.45, e.position.z);
+    m.position.set(e.position.x, getEntityY(e), e.position.z);
   }
 
   for (const [id, m] of meshes) {
