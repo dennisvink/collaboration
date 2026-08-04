@@ -2,15 +2,34 @@
 
 Browser-native foundation for a modular Three.js game. There is no bundler or build step.
 
-## Run locally
+## Development
 
 ES modules must be served over HTTP:
 
 ```sh
-python3 -m http.server 8080
+npm install
+npm run dev
 ```
 
 Open <http://localhost:8080>. When renderer initialization is complete, the production bootstrap sets `window.__GAME_READY__ = true` and emits `game:ready`.
+
+Run the deterministic gameplay tests with `npm test`. Run the browser smoke test
+with `npm run test:smoke`; Playwright starts a local server and waits for
+`window.__GAME_READY__` before checking the game canvas.
+
+## CI
+
+Pull requests and pushes to `main` run the Node tests and a Chromium Playwright
+smoke test in GitHub Actions. The smoke test fails if the game does not finish
+bootstrapping within 60 seconds. The workflow does not require repository
+secrets.
+
+## Deployment
+
+Every push to `main` publishes the repository root as a static GitHub Pages
+site. In **Settings → Pages**, set **Source** to **GitHub Actions**. The Pages
+workflow uploads the browser-native files directly; there is no build output or
+generated directory.
 
 ## Dependency policy
 
