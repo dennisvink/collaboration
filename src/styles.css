@@ -1,5 +1,14 @@
 * { box-sizing: border-box; }
-html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #050510; color: white; font-family: system-ui, sans-serif; }
-#game { width: 100vw; height: 100vh; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #020208; color: white; font-family: system-ui, sans-serif; touch-action: none; }
+#game { position: relative; width: 100vw; height: 100dvh; min-height: 320px; }
 #game canvas { display: block; width: 100%; height: 100%; }
-#status { position: fixed; top: 1rem; left: 1rem; padding: .4rem .7rem; border: 1px solid #ffdb00; border-radius: .3rem; background: rgb(0 0 0 / 70%); }
+#status { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#touch-controls { position: fixed; z-index: 30; inset: auto max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); display: flex; justify-content: space-between; align-items: end; pointer-events: none; }
+#touch-controls button { pointer-events: auto; min-width: 52px; min-height: 52px; border: 2px solid #ffe600; border-radius: 12px; color: #fff; background: #080816dd; font: 700 1rem system-ui; user-select: none; -webkit-user-select: none; }
+#touch-controls button:active { color: #080816; background: #ffe600; }
+.dpad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 4px; }
+.dpad .up { grid-area: 1 / 2; }.dpad .left { grid-area: 2 / 1; }.dpad .down { grid-area: 2 / 2; }.dpad .right { grid-area: 2 / 3; }
+.actions { display: grid; gap: 8px; }
+@media (hover: hover) and (pointer: fine) { #touch-controls { opacity: .6; } }
+@media (max-height: 540px) { #touch-controls button { min-width: 44px; min-height: 44px; }.dpad { grid-template: repeat(3,44px) / repeat(3,44px); }.pacman-hud__onboarding { display: none; } }
+@media (orientation: portrait) and (max-width: 600px) { #touch-controls { bottom: max(8px, env(safe-area-inset-bottom)); }.pacman-hud__status { margin-top: 30vh !important; } }
