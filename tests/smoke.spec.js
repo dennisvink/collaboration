@@ -27,7 +27,7 @@ test('touch controls are visible in portrait and landscape', async ({ page }) =>
   await waitUntilReady(page);
   await expect(page.locator('[data-action="move-up"]')).toBeVisible();
   await page.locator('#primary-action').click();
-  await page.locator('[data-action="pause"]').tap();
+  await page.locator('[data-action="pause"]').click();
   await expect(page.locator('#status')).toHaveText('Spel gepauzeerd');
 
   await page.setViewportSize({ width: 844, height: 390 });
