@@ -2,20 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Pacman</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>3D Pacman Invaders</title>
   <link rel="stylesheet" href="./src/styles.css">
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"
-      }
-    }
-  </script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}</script>
 </head>
 <body>
-  <main id="game" aria-label="3D Pacman game"></main>
+  <main id="game" aria-label="3D Pacman Invaders game"></main>
   <aside id="status" role="status" aria-live="polite">Loading…</aside>
+  <nav id="touch-controls" aria-label="Touch controls">
+    <button data-action="move-up">▲</button>
+    <button data-action="move-left">◀</button>
+    <button data-action="move-down">▼</button>
+    <button data-action="move-right">▶</button>
+    <button class="pause" data-action="pause">Ⅱ</button>
+    <button class="restart" data-action="restart">↻</button>
+  </nav>
   <noscript>This game requires JavaScript.</noscript>
   <script type="module" src="./src/game.js"></script>
 </body>
