@@ -8,7 +8,7 @@ const gameplay=createGameplay({levels:[{pellets:20},{pellets:20}],lives:3});
 const hud=createHUD({container:root,onboarding:['WASD/pijlen: bewegen','Muis/drag: kijken','Klik/spatie/vuur: schieten','P/Escape: pauze']});
 const entities=new Map(), keys=new Set(); let yaw=0,pitch=0,lastFire=-Infinity,previous=performance.now(),enemyClock=0,sequence=0;
 const pellets=[[-8,-6],[-4,-6],[0,-6],[4,-6],[8,-6],[-8,-2],[-4,-2],[0,-2],[4,-2],[8,-2],[-8,2],[-4,2],[0,2],[4,2],[8,2],[-8,6],[-4,6],[0,6],[4,6],[8,6]];
-function resetWorld(){entities.clear();entities.set('pacman',{kind:'pacman',position:{x:0,z:6}});pellets.forEach(([x,z],i)=>entities.set(`pellet-${i}`,{kind:i%9?'pellet':'power-pellet',position:{x,z}}));for(let i=0;i<5;i++){const p={x:-6+i*3,z:-5};if(validSpawn(p))entities.set(`invader-${i}`,{kind:'invader',position:p,velocity:{x:1.1}})}}
+function resetWorld(){entities.clear();entities.set('pacman',{kind:'pacman',position:{x:2,z:6}});pellets.forEach(([x,z],i)=>entities.set(`pellet-${i}`,{kind:i%9?'pellet':'power-pellet',position:{x,z}}));for(let i=0;i<5;i++){const p={x:-6+i*3,z:-5};if(validSpawn(p))entities.set(`invader-${i}`,{kind:'invader',position:p,velocity:{x:1.1}})}}
 function state(){return {...gameplay.getState(),pelletsTotal:pellets.length,entities}}
 function refresh(){const s=state();syncScene(s);hud.updateHUD(s);status.textContent=s.status;document.body.dataset.gameStatus=s.status}
 function start(){const s=gameplay.getState();if(s.status==='start')gameplay.start();else if(s.status==='paused')gameplay.resume();else if(s.status==='level-won'&&s.level<s.levelCount){gameplay.advanceLevel();resetWorld()}else if(s.status==='game-over'||s.status==='level-won'){gameplay.restart();resetWorld();gameplay.start()}refresh()}
